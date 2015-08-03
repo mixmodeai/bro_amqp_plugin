@@ -45,7 +45,7 @@ void Plugin::Done() {
 }
 
 WriterBackend* Plugin::Instantiate(WriterFrontend* frontend) {
-	std::cout << "Plugin::Instantiate(" << frontend << ")" << std::endl;
+	// std::cout << "Plugin::Instantiate(" << frontend << ")" << std::endl;
 
 	return new ::logging::writer::amqp(frontend);
 }

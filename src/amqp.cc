@@ -125,7 +125,7 @@ bool amqp::DoInit(const WriterInfo& info, int arg_num_fields, const Field* const
 			break;
 		} else {
 			message_bus_connstr = it->second;
-			std::cout << "message_bus_connstr = " << message_bus_connstr << std::endl;
+			// std::cout << "message_bus_connstr = " << message_bus_connstr << std::endl;
 		}
 
 		it = info.config.find("exchange");
@@ -134,7 +134,7 @@ bool amqp::DoInit(const WriterInfo& info, int arg_num_fields, const Field* const
 			break;
 		} else {
 			message_bus_exchange = it->second;
-			std::cout << "message_bus_exchange = " << message_bus_exchange << std::endl;
+			// std::cout << "message_bus_exchange = " << message_bus_exchange << std::endl;
 		}
 
 		it = info.config.find("queue");
@@ -143,15 +143,15 @@ bool amqp::DoInit(const WriterInfo& info, int arg_num_fields, const Field* const
 			break;
 		} else {
 			message_bus_queue = it->second;
-			std::cout << "message_bus_queue = " << message_bus_queue << std::endl;
+			// std::cout << "message_bus_queue = " << message_bus_queue << std::endl;
 		}
 
-		std::cout << "pre-new plugin::PS_amqp::message_bus_publisher" << std::endl;
+		// std::cout << "pre-new plugin::PS_amqp::message_bus_publisher" << std::endl;
 
 		message_bus_pub = new plugin::PS_amqp::message_bus_publisher(message_bus_connstr,
 																	 message_bus_exchange,
 																	 message_bus_queue);
-		std::cout << "post-new plugin::PS_amqp::message_bus_publisher" << std::endl;
+		// std::cout << "post-new plugin::PS_amqp::message_bus_publisher" << std::endl;
 
 		if(!message_bus_pub) {
 			break;

@@ -28,7 +28,7 @@
 plugin::PS_amqp::message_bus_publisher::message_bus_publisher(std::string connStr, std::string _exchange, std::string _queue) :
 					amqp(connStr), exchange(_exchange), queue(_queue)
 {
-	std::cout << "message_bus_publisher::message_bus_publisher(" << connStr << "," << _exchange << "," << _queue << ")" << std::endl;
+	// std::cout << "message_bus_publisher::message_bus_publisher(" << connStr << "," << _exchange << "," << _queue << ")" << std::endl;
 }
 
 plugin::PS_amqp::message_bus_publisher::~message_bus_publisher()
