@@ -1,0 +1,4 @@
+# Options for the AMQP writer
+
+module PS_amqp;
+
