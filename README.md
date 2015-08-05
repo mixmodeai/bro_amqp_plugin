@@ -25,7 +25,7 @@ Compilation and Installation
 Usage
 ------------
 
-Using PS::amqp requires instantiating a Bro Log Filter as shown below. From there, a write to the created log will cause the plugin to send the data to the AMQP server. 
+Using PS::amqp requires instantiating a Bro Log Filter as shown below. From there, a write to the created log will cause the plugin to send the data to the AMQP server.
 
 **Note**: "password" and "username" are in the appropriate order per the underlying libraries being used.
 
@@ -51,15 +51,15 @@ GPL
 
 Copyright (c) 2015, Packetsled. All rights reserved.
 
-tcplog is free software: you can redistribute it and/or modify
+PS::amqp is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-tcplog is distributed in the hope that it will be useful,
+PS::amqp is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with tcplog.  If not, see <http://www.gnu.org/licenses/>.
+along with PS::amqp.  If not, see <http://www.gnu.org/licenses/>.
