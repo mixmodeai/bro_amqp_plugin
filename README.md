@@ -26,7 +26,7 @@ Using PS::amqp requires instantiating a Bro Log Filter as shown below. From ther
 
 **Note**: "password" and "username" are in the appropriate order per the underlying libraries being used.
 
-~~~
+```bro
 event bro_init() {
              local filter: Log::Filter = [
 		$name="amqp",
@@ -40,7 +40,7 @@ event bro_init() {
 	Log::add_filter(amqp_test::LOG, filter);
 	Log::remove_filter(amqp_test::LOG, "default");
 }
-~~~
+```
 
 ## License
 
