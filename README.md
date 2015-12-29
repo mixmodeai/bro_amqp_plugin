@@ -40,7 +40,7 @@ event bro_init() {
 	Log::add_filter(amqp_test::LOG, filter);
 	Log::remove_filter(amqp_test::LOG, "default");
 }
-~~
+~~~
 
 ## License
 
