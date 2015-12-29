@@ -1,35 +1,32 @@
-PS::amqp - Bro Writer Plugin to Stream Data to an AMQP Server
-===========
+![PacketSled Logo](https://packetsled.com/wp-content/themes/freshbiz/img/packetsled-logo.png)
+# PS::amqp - Bro Writer Plugin to Stream Data to an AMQP Server
 
-Introduction
-------------
+
+## Introduction
 PS::amp is a plugin that provides support for writing data to an ``AMQP`` server.
 This plugin provides support the ``AMQP Protocol,`` specifically ``RabbitMQ.``
 
 
-Prerequisites
-------------
+## Prerequisites
 
 1. AMQPCPP - ``https://github.com/akalend/amqpcpp``
 1. RabbitMQ-C - ``https://github.com/alanxz/rabbitmq-c``
 
 
-Compilation and Installation
-------------
+## Compilation and Installation
 
     cd <path to>/bro_amqp_plugin
     ./configure --bro-dist=$PATH_TO_SRC_TREE_FOR/bro
     make -j10
     make install
 
-Usage
-------------
+## Usage
 
 Using PS::amqp requires instantiating a Bro Log Filter as shown below. From there, a write to the created log will cause the plugin to send the data to the AMQP server.
 
 **Note**: "password" and "username" are in the appropriate order per the underlying libraries being used.
 
-```
+~~~
 event bro_init() {
              local filter: Log::Filter = [
 		$name="amqp",
@@ -43,10 +40,10 @@ event bro_init() {
 	Log::add_filter(amqp_test::LOG, filter);
 	Log::remove_filter(amqp_test::LOG, "default");
 }
-```
+~~
 
-License
-------------
+## License
+
 GPL
 
 Copyright (c) 2015, Packetsled. All rights reserved.
