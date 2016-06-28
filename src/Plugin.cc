@@ -18,6 +18,7 @@
 
  */
 // Aaron Eppert - PacketSled - 2015
+
 #include <string>
 #include <iostream>
 #include "Plugin.h"
@@ -45,7 +46,7 @@ void Plugin::Done() {
 }
 
 WriterBackend* Plugin::Instantiate(WriterFrontend* frontend) {
-	// std::cout << "Plugin::Instantiate(" << frontend << ")" << std::endl;
+	//std::cout << "AMQP - Plugin::Instantiate(" << frontend << ")" << std::endl;
 
 	return new ::logging::writer::amqp(frontend);
 }

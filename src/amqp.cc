@@ -18,13 +18,17 @@
 
  */
 // Aaron Eppert - PacketSled - 2015
-//#include "config.h"
+#include "config.h"
 
 #include <string>
 #include <iostream>
 #include <vector>
 #include <errno.h>
+
 #include "amqp.h"
+#include "threading/MsgThread.h"
+#include "threading/formatters/JSON.h"
+#include "threading/formatters/Ascii.h"
 #include "threading/SerialTypes.h"
 
 using namespace plugin::PS_amqp;
@@ -35,70 +39,69 @@ using namespace std;
 using threading::Value;
 using threading::Field;
 
-amqp::amqp(WriterFrontend* frontend) : WriterBackend(frontend) {
-	json = new threading::formatter::JSON(this,	threading::formatter::JSON::TS_EPOCH);
+amqp::amqp(WriterFrontend* frontend) :
+		WriterBackend(frontend) {
+	json = new threading::formatter::JSON(this,
+			threading::formatter::JSON::TS_EPOCH);
 }
 
-amqp::~amqp()
-{
-	if(json) {
+amqp::~amqp() {
+	if (json) {
 		delete json;
 	}
 
-	if(message_bus_pub) {
+	if (message_bus_pub) {
 		delete message_bus_pub;
 	}
 }
 
-std::string amqp::GetTableType(int arg_type, int arg_subtype)
-{
+std::string amqp::GetTableType(int arg_type, int arg_subtype) {
 	std::string type;
 
 	switch (arg_type) {
-		case TYPE_BOOL:
-			type = "boolean";
-			break;
+	case TYPE_BOOL:
+		type = "boolean";
+		break;
 
-		case TYPE_INT:
-		case TYPE_COUNT:
-		case TYPE_COUNTER:
-		case TYPE_PORT:
-			type = "integer";
-			break;
+	case TYPE_INT:
+	case TYPE_COUNT:
+	case TYPE_COUNTER:
+	case TYPE_PORT:
+		type = "integer";
+		break;
 
-		case TYPE_SUBNET:
-		case TYPE_ADDR:
-			type = "text";
-			break;
+	case TYPE_SUBNET:
+	case TYPE_ADDR:
+		type = "text";
+		break;
 
-		case TYPE_TIME:
-		case TYPE_INTERVAL:
-		case TYPE_DOUBLE:
-			type = "double precision";
-			break;
+	case TYPE_TIME:
+	case TYPE_INTERVAL:
+	case TYPE_DOUBLE:
+		type = "double precision";
+		break;
 
-		case TYPE_ENUM:
-		case TYPE_STRING:
-		case TYPE_FILE:
-		case TYPE_FUNC:
-			type = "text";
-			break;
+	case TYPE_ENUM:
+	case TYPE_STRING:
+	case TYPE_FILE:
+	case TYPE_FUNC:
+		type = "text";
+		break;
 
-		case TYPE_TABLE:
-		case TYPE_VECTOR:
-			type = "text";
-			break;
+	case TYPE_TABLE:
+	case TYPE_VECTOR:
+		type = "text";
+		break;
 
-		default:
-			type = Fmt("%d", arg_type);
+	default:
+		type = Fmt("%d", arg_type);
 	}
 
 	return type;
 }
 
 // returns true true in case of error
-bool amqp::checkError(int code)
-{
+bool amqp::checkError(int code) {
 //	if (code != SQLITE_OK && code != SQLITE_DONE) {
 //		Error(Fmt("SQLite call failed: %s", sqlite3_errmsg(db)));
 //		return true;
@@ -107,88 +110,189 @@ bool amqp::checkError(int code)
 	return false;
 }
 
-bool amqp::DoInit(const WriterInfo& info, int arg_num_fields, const Field* const * arg_fields)
+bool amqp::Init(void)
+{
+	if(message_bus_connstr.empty() || message_bus_exchange.empty() ||
+	   message_bus_queue.empty()   || probeid.empty() ||  envid.empty() ) {
+		return false;
+	}
+
+	try {
+
+		path = Fmt("\"sensor\": \"probe_%s_%s\",", envid.c_str(), probeid.c_str());
+
+		/*
+		if (info_path.length() > 0 ) {
+			path = Fmt("\"sensor\": \"probe_%s_%s\", \"log\": \"%s\",",
+					envid.c_str(), probeid.c_str(), info_path.c_str());
+		} else {
+
+		}
+		*/
+
+		message_bus_pub = new plugin::PS_amqp::message_bus_publisher(
+											message_bus_connstr, message_bus_exchange, message_bus_queue);
+		if (!message_bus_pub) {
+			return false;
+		}
+
+		message_bus_pub->initialize();
+
+		return true;
+	} catch (AMQPException e) {
+		MsgThread::Info(Fmt("PS_amqp - Init - AMQPException: %s", e.getMessage().c_str()));
+		ReInit();
+	} catch (const std::exception &exc) {
+		MsgThread::Info(Fmt("PS_amqp - Init - std::exception: %s ", exc.what()));
+	    ReInit();
+	} catch(...) {
+		MsgThread::Info("PS_amqp - Init - Exception found");
+		ReInit();
+	}
+
+	return false;
+}
+
+bool amqp::ReInit(void)
+{
+	bool ret = false;
+
+	if(message_bus_connstr.empty() || message_bus_exchange.empty() ||
+	   message_bus_queue.empty()   || probeid.empty() ||  envid.empty() ) {
+		return false;
+	}
+
+	try {
+		if(message_bus_pub) {
+			MsgThread::Info("PS_amqp - Attempt to reinitialize");
+			if (message_bus_pub) {
+				delete message_bus_pub;
+			}
+			sleep(AMQP_RETRY_INTERVAL);
+			Init();
+		}
+	} catch(...) {
+		MsgThread::Info("PS_amqp - Exception found");
+	}
+
+	return true;
+}
+
+bool amqp::DoInit(const WriterInfo& info, int arg_num_fields,
+		const Field* const * arg_fields)
 {
 	bool ret = false;
 
 	WriterInfo::config_map::const_iterator it;
 	num_fields = arg_num_fields;
 	fields = arg_fields;
-	std::string message_bus_connstr;
-	std::string message_bus_exchange;
-	std::string message_bus_queue;
 
-	do {
+	try {
 		it = info.config.find("connstr");
 		if (it == info.config.end()) {
 			MsgThread::Info(Fmt("connstr configuration option not found"));
-			break;
+			return false;
 		} else {
 			message_bus_connstr = it->second;
-			// std::cout << "message_bus_connstr = " << message_bus_connstr << std::endl;
 		}
 
 		it = info.config.find("exchange");
 		if (it == info.config.end()) {
 			MsgThread::Info(Fmt("exchange configuration option not found"));
-			break;
+			return false;
 		} else {
 			message_bus_exchange = it->second;
-			// std::cout << "message_bus_exchange = " << message_bus_exchange << std::endl;
 		}
 
 		it = info.config.find("queue");
 		if (it == info.config.end()) {
 			MsgThread::Info(Fmt("queue configuration option not found"));
-			break;
+			return false;
 		} else {
 			message_bus_queue = it->second;
-			// std::cout << "message_bus_queue = " << message_bus_queue << std::endl;
 		}
 
-		// std::cout << "pre-new plugin::PS_amqp::message_bus_publisher" << std::endl;
-
-		message_bus_pub = new plugin::PS_amqp::message_bus_publisher(message_bus_connstr,
-																	 message_bus_exchange,
-																	 message_bus_queue);
-		// std::cout << "post-new plugin::PS_amqp::message_bus_publisher" << std::endl;
-
-		if(!message_bus_pub) {
-			break;
+		it = info.config.find("probeid");
+		if (it == info.config.end()) {
+			MsgThread::Info(Fmt("probeid configuration option not found"));
+			return false;
+		} else {
+			probeid = it->second;
 		}
 
-		message_bus_pub->initialize();
-		ret = true;
-	} while(0);
+		it = info.config.find("envid");
+		if (it == info.config.end()) {
+			MsgThread::Info(Fmt("envid configuration option not found"));
+			return false;
+		} else {
+			envid = it->second;
+		}
 
-	return ret;
+		info_path = info.path;
+
+		return Init();
+	} catch (...) {
+		MsgThread::Info("PS_amqp - DoInit - Exception found");
+	}
+
+	return false;
 }
 
-bool amqp::odesc_to_string_writer(const ODesc &buffer)
-{
+bool amqp::odesc_to_string_writer(const ODesc &buffer, bool add_log_path) {
 	bool ret = false;
+
 	std::string out_buf = std::string(reinterpret_cast<const char*>(buffer.Bytes()));
+	out_buf = out_buf.insert(1, path);
 
-	if(!out_buf.empty()) {
-		message_bus_pub->publish(out_buf);
-		ret = true;
+	if (add_log_path) {
+		out_buf = out_buf.insert(1, Fmt("\"log\": \"%s\",", info_path.c_str()));
+	}
+
+	try {
+		if (!out_buf.empty()) {
+			message_bus_pub->publish(out_buf);
+			ret = true;
+		}
+	} catch (AMQPException e) {
+		MsgThread::Info(Fmt("PS_amqp - odesc_to_string_writer(\"%s\") - AMQPException: %s",
+							out_buf.c_str(), e.getMessage().c_str()));
+		ReInit();
+	} catch (...) {
+		MsgThread::Info("PS_amqp - odesc_to_string_writer - Exception found");
 	}
 
 	return true;
 }
 
-bool amqp::DoWrite(int num_fields, const Field* const * fields, Value** vals)
-{
-	if (message_bus_pub) {
-		ODesc buffer;
-		json->Describe(&buffer, num_fields, fields, vals);
-		odesc_to_string_writer(buffer);
+bool amqp::DoWrite(int num_fields, const Field* const * fields, Value** vals) {
+	try {
+		bool add_log_path = true;
+
+		if (message_bus_pub) {
+			ODesc buffer;
+
+			for ( int j = 0; j < num_fields; j++ ) {
+				const threading::Field* field = fields[j];
+				if ( strncasecmp(field->name, "log", 3) == 0 ) {
+#if 0
+					MsgThread::Info("Found existing \"log\" attribute - using instead of default");
+#endif // 0
+					add_log_path = false;
+					break;
+				}
+			}
+
+			json->Describe(&buffer, num_fields, fields, vals);
+			odesc_to_string_writer(buffer, add_log_path);
+		}
+	} catch (...) {
+		MsgThread::Info("PS_amqp - DoWrite - Exception found");
 	}
 	return true;
 }
 
-bool amqp::DoRotate(const char* rotated_path, double open, double close, bool terminating)
-{
+bool amqp::DoRotate(const char* rotated_path, double open, double close,
+		bool terminating) {
 	if (!FinishedRotation("/dev/null", Info().path, open, close, terminating)) {
 		Error(Fmt("error rotating %s", Info().path));
 		return false;

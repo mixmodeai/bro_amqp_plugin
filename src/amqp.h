@@ -25,14 +25,17 @@
 #ifndef LOGGING_WRITER_AMQP_H
 #define LOGGING_WRITER_AMQP_H
 
-//#include "config.h"
+#include "config.h"
 
 #include <string>
 #include "logging/WriterBackend.h"
 #include "threading/formatters/JSON.h"
 #include "message_bus.h"
+#include <unistd.h>
 
 using namespace std;
+
+#define AMQP_RETRY_INTERVAL	120
 
 namespace logging {
 	namespace writer {
@@ -44,6 +47,9 @@ namespace logging {
 				static WriterBackend* Instantiate(WriterFrontend* frontend)	{
 					return new amqp(frontend);
 				}
+
+				bool Init(void);
+				bool ReInit(void);
 
 			protected:
 				virtual bool DoInit(const WriterInfo& info, int arg_num_fields, const threading::Field* const* arg_fields);
@@ -66,7 +72,15 @@ namespace logging {
 				plugin::PS_amqp::message_bus_publisher *message_bus_pub;
 				threading::formatter::JSON *json;
 
-				bool odesc_to_string_writer(const ODesc &buffer);
+				bool odesc_to_string_writer(const ODesc &buffer, bool add_log_path);
+
+				std::string info_path;
+				std::string path;
+				std::string message_bus_connstr;
+				std::string message_bus_exchange;
+				std::string message_bus_queue;
+				std::string probeid;
+				std::string envid;
 
 		};
 	}

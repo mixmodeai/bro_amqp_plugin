@@ -38,25 +38,23 @@ plugin::PS_amqp::message_bus_publisher::~message_bus_publisher()
 
 void plugin::PS_amqp::message_bus_publisher::initialize()
 {
-	try {
-		if(!exchange.empty()) {
-			ex = amqp.createExchange(exchange);
+	if(!exchange.empty()) {
+		ex = amqp.createExchange(exchange);
 
-			// Force the disabling of the immediate flag. Yes.. it is misspelled
-			// by the authors.
-			ex->setParam(~AMQP_IMMIDIATE);
+		// Force the disabling of the immediate flag. Yes.. it is misspelled
+		// by the authors.
+		ex->setParam(~AMQP_IMMIDIATE);
 
-			ex->setHeader("Delivery-mode", 2);
-			ex->setHeader("Content-type", "application/json");
-			ex->setHeader("Content-encoding", "UTF-8");
-		}
-	} catch (AMQPException e) {
-		std::cout << e.getMessage() << std::endl;
+		ex->setHeader("Delivery-mode", 2);
+		ex->setHeader("Content-type", "application/json");
+		ex->setHeader("Content-encoding", "UTF-8");
 	}
 }
 
 void plugin::PS_amqp::message_bus_publisher::publish(std::string msg)
 {
+	// std::cout << "PS_amqp - message_bus_publisher::publish - msg = " << msg << std::endl;
+
 	if(!queue.empty()) {
 		ex->Publish(msg, queue);
 	}
