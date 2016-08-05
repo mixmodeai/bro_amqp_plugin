@@ -4,7 +4,7 @@ module amqp_test;
 export {
 	type Info: record {
 		uid:     string  &log;
-  		ts:		 time    &log;
+  	ts:			 time    &log;
   };
 
   redef enum Log::ID += { LOG };
@@ -30,7 +30,7 @@ event bro_init() {
 
 event new_connection(c: connection) {
   local tmp: Info = [	$uid=c$uid,
-						$ts=c$start_time ];
+											$ts=c$start_time ];
 
   Log::write(amqp_test::LOG, tmp);
 }

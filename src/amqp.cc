@@ -1,7 +1,7 @@
 /*
 	This file is part of bro_amqp_plugin.
 
-	Copyright (c) 2015, Packetsled. All rights reserved.
+	Copyright (c) 2015-2016, Packetsled. All rights reserved.
 
 	tcplog is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -17,7 +17,8 @@
 	along with tcplog.  If not, see <http://www.gnu.org/licenses/>.
 
  */
-// Aaron Eppert - PacketSled - 2015
+// Aaron Eppert - PacketSled - 2015-2016
+
 #include "config.h"
 
 #include <string>
@@ -31,6 +32,8 @@
 #include "threading/formatters/Ascii.h"
 #include "threading/SerialTypes.h"
 
+#include "amqp.bif.h"
+
 using namespace plugin::PS_amqp;
 using namespace logging;
 using namespace writer;
@@ -43,6 +46,10 @@ amqp::amqp(WriterFrontend* frontend) :
 		WriterBackend(frontend) {
 	json = new threading::formatter::JSON(this,
 			threading::formatter::JSON::TS_EPOCH);
+
+	cacert_path = "";
+	client_cert_path = "";
+	client_key_path = "";
 }
 
 amqp::~amqp() {
@@ -131,7 +138,8 @@ bool amqp::Init(void)
 		*/
 
 		message_bus_pub = new plugin::PS_amqp::message_bus_publisher(
-											message_bus_connstr, message_bus_exchange, message_bus_queue);
+											message_bus_connstr, message_bus_exchange, message_bus_queue,
+											BifConst::PS_amqp::use_ssl, cacert_path, client_cert_path, client_key_path);
 		if (!message_bus_pub) {
 			return false;
 		}
@@ -226,6 +234,32 @@ bool amqp::DoInit(const WriterInfo& info, int arg_num_fields,
 			return false;
 		} else {
 			envid = it->second;
+		}
+
+		if (BifConst::PS_amqp::use_ssl) {
+			it = info.config.find("cacert_path");
+			if (it == info.config.end()) {
+				MsgThread::Info(Fmt("cacert_path configuration option not found"));
+				return false;
+			} else {
+				cacert_path = it->second;
+			}
+
+			it = info.config.find("client_cert_path");
+			if (it == info.config.end()) {
+				MsgThread::Info(Fmt("client_cert_path configuration option not found"));
+				return false;
+			} else {
+				client_cert_path = it->second;
+			}
+
+			it = info.config.find("client_key_path");
+			if (it == info.config.end()) {
+				MsgThread::Info(Fmt("client_key_path configuration option not found"));
+				return false;
+			} else {
+				client_key_path = it->second;
+			}
 		}
 
 		info_path = info.path;

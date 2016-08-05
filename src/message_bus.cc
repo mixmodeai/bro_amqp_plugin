@@ -1,7 +1,7 @@
 /*
 	This file is part of bro_amqp_plugin.
 
-	Copyright (c) 2015, Packetsled. All rights reserved.
+	Copyright (c) 2015-2016, Packetsled. All rights reserved.
 
 	tcplog is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -17,7 +17,8 @@
 	along with tcplog.  If not, see <http://www.gnu.org/licenses/>.
 
  */
-// Aaron Eppert - PacketSled - 2015
+// Aaron Eppert - PacketSled - 2015-2016
+
 #include "message_bus.h"
 
 //using namespace plugin::PS_amqp;
@@ -25,8 +26,16 @@
 //
 // connStr -> "<password>:<login>@<hostname>:<port>"
 //
-plugin::PS_amqp::message_bus_publisher::message_bus_publisher(std::string connStr, std::string _exchange, std::string _queue) :
-					amqp(connStr), exchange(_exchange), queue(_queue)
+plugin::PS_amqp::message_bus_publisher::message_bus_publisher(std::string connStr,
+							 std::string _exchange,
+							 std::string _queue,
+							 bool use_ssl,
+							 std::string cert_path,
+							 std::string client_cert_path,
+							 std::string client_key_path ) :
+					amqp(connStr, use_ssl, cert_path, client_cert_path, client_key_path),
+					exchange(_exchange),
+					queue(_queue)
 {
 	// std::cout << "message_bus_publisher::message_bus_publisher(" << connStr << "," << _exchange << "," << _queue << ")" << std::endl;
 }
@@ -49,6 +58,7 @@ void plugin::PS_amqp::message_bus_publisher::initialize()
 		ex->setHeader("Content-type", "application/json");
 		ex->setHeader("Content-encoding", "UTF-8");
 	}
+
 }
 
 void plugin::PS_amqp::message_bus_publisher::publish(std::string msg)

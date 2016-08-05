@@ -1,7 +1,7 @@
 /*
 	This file is part of bro_amqp_plugin.
 
-	Copyright (c) 2015, Packetsled. All rights reserved.
+	Copyright (c) 2015-2016, Packetsled. All rights reserved.
 
 	tcplog is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -17,7 +17,9 @@
 	along with tcplog.  If not, see <http://www.gnu.org/licenses/>.
 
  */
-// Aaron Eppert - PacketSled - 2015
+// Aaron Eppert - PacketSled - 2015-2016
+
+
 #ifndef BRO_PLUGIN_PS_AMQP
 #define BRO_PLUGIN_PS_AMQP
 

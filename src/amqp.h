@@ -1,7 +1,7 @@
 /*
 	This file is part of bro_amqp_plugin.
 
-	Copyright (c) 2015, Packetsled. All rights reserved.
+	Copyright (c) 2015-2016, Packetsled. All rights reserved.
 
 	tcplog is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -17,7 +17,8 @@
 	along with tcplog.  If not, see <http://www.gnu.org/licenses/>.
 
  */
- // Aaron Eppert - PacketSled - 2015
+ // Aaron Eppert - PacketSled - 2015-2016
+
 //
 // Log writer for AMQP logs.
 //
@@ -81,6 +82,10 @@ namespace logging {
 				std::string message_bus_queue;
 				std::string probeid;
 				std::string envid;
+
+				std::string cacert_path;
+				std::string client_cert_path;
+				std::string client_key_path;
 
 		};
 	}

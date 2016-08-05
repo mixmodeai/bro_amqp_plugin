@@ -2,3 +2,12 @@
 
 module PS_amqp;
 
+const connstr: string;
+const exchange: string;
+const queue: string;
+const envid: count;
+const probeid: count;
+const use_ssl: bool;
+const cacert_path: string;
+const client_cert_path: string;
+const client_key_path: string;
